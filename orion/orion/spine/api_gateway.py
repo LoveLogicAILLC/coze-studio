@@ -5,7 +5,7 @@ Every module's OpenAPI surface is auto-mounted at ``/modules/{name}/``.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +14,9 @@ from orion.spine.config import OrionConfig
 from orion.spine.event_bus import Event, EventBus
 from orion.spine.provider_manager import ProviderManager
 from orion.spine.registry import ModuleRegistry
+
+if TYPE_CHECKING:
+    from orion.contracts.base_module import BaseModule
 
 
 def create_app(
@@ -61,7 +64,7 @@ def create_app(
             "revenue_surfaces": mod.revenue_surfaces,
         }
 
-    def _require_module(name: str) -> Any:
+    def get_module_or_404(name: str) -> BaseModule:
         mod = registry.get(name)
         if mod is None:
             raise HTTPException(status_code=404, detail=f"Module '{name}' not found")
@@ -69,37 +72,37 @@ def create_app(
 
     @app.post("/modules/architect/cycle")
     async def architect_cycle(args: dict[str, Any] | None = Body(default=None)) -> Any:
-        mod = _require_module("architect")
+        mod = get_module_or_404("architect")
         return await mod.handle_mcp_call("run_cycle", args or {})
 
     @app.get("/modules/architect/status")
     async def architect_status() -> Any:
-        mod = _require_module("architect")
+        mod = get_module_or_404("architect")
         return await mod.handle_mcp_call("cycle_status", {})
 
     @app.post("/modules/architect/seed")
     async def architect_seed(args: dict[str, Any] | None = Body(default=None)) -> Any:
-        mod = _require_module("architect")
+        mod = get_module_or_404("architect")
         return await mod.handle_mcp_call("inject_seed", args or {})
 
     @app.post("/modules/architect/scan")
     async def architect_scan(args: dict[str, Any] | None = Body(default=None)) -> Any:
-        mod = _require_module("architect")
+        mod = get_module_or_404("architect")
         return await mod.handle_mcp_call("discovery_scan", args or {})
 
     @app.post("/modules/echomerce/detect")
     async def echomerce_detect(args: dict[str, Any] | None = Body(default=None)) -> Any:
-        mod = _require_module("echomerce")
+        mod = get_module_or_404("echomerce")
         return await mod.handle_mcp_call("detect_demand", args or {})
 
     @app.post("/modules/echomerce/offerings")
     async def echomerce_offerings(args: dict[str, Any] | None = Body(default=None)) -> Any:
-        mod = _require_module("echomerce")
+        mod = get_module_or_404("echomerce")
         return await mod.handle_mcp_call("create_offering", args or {})
 
     @app.get("/modules/echomerce/demand-graph")
     async def echomerce_demand_graph(query: str = "") -> Any:
-        mod = _require_module("echomerce")
+        mod = get_module_or_404("echomerce")
         return await mod.handle_mcp_call("query_demand_graph", {"query": query})
 
     @app.post("/events")

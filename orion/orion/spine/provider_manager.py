@@ -40,7 +40,7 @@ class ProviderManager:
 
     def __init__(self, config: OrionConfig) -> None:
         self._providers: list[ProviderStatus] = [
-            ProviderStatus(config=p) for p in config.default_providers() if p.enabled
+            ProviderStatus(config=p) for p in config.default_providers()
         ]
         self._timeout = 30.0
 

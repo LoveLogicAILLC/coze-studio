@@ -57,6 +57,7 @@ custom_value: 42
     bad_path.write_text("providers: [")
     bad_cfg = OrionConfig.from_yaml(bad_path)
     assert bad_cfg.host == "0.0.0.0"
+    assert bad_cfg.providers == []
 
 
 def test_default_providers_respects_enabled() -> None:
@@ -221,12 +222,13 @@ class _MissingContractModule(BaseModule):
         return []
 
     async def initialize(self) -> None:
-        return None
+        pass
 
-    async def handle_event(self, event: Event) -> None:
-        return None
+    async def handle_event(self, _: Event) -> None:
+        pass
 
     async def handle_mcp_call(self, tool: str, args: dict[str, Any]) -> Any:
+        _ = (tool, args)
         return {}
 
 
@@ -245,22 +247,24 @@ async def test_provider_health_check_sends_api_key(monkeypatch: pytest.MonkeyPat
         def __init__(self) -> None:
             self.status_code = 200
 
-    class FakeClient:
+    class MockAsyncHttpClient:
         def __init__(self, timeout: float) -> None:
-            _ = timeout
+            self.timeout = timeout
 
-        async def __aenter__(self) -> FakeClient:
+        async def __aenter__(self) -> MockAsyncHttpClient:
             return self
 
-        async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
-            _ = (exc_type, exc, tb)
+        async def __aexit__(self, *_: Any) -> None:
+            pass
 
         async def get(self, url: str, headers: dict[str, str] | None = None) -> FakeResponse:
             captured["url"] = url
             captured["headers"] = headers
             return FakeResponse()
 
-    monkeypatch.setattr("orion.spine.provider_manager.httpx.AsyncClient", FakeClient)
+    monkeypatch.setattr(
+        "orion.spine.provider_manager.httpx.AsyncClient", MockAsyncHttpClient
+    )
     manager = ProviderManager(
         OrionConfig(
             providers=[

@@ -142,7 +142,7 @@ class ImprovementCycle:
         await self._event_bus.emit(Event(
             name="architect.discovery_complete",
             payload={
-                "cycle_id": cycle_id or self._current_cycle_id or uuid4().hex,
+                "cycle_id": self._resolve_cycle_id(cycle_id),
                 "opportunities": scan_results["opportunities"],
             },
             source_module="architect",
@@ -220,3 +220,7 @@ class ImprovementCycle:
             "treasury_updated": True,
             "note": "Revenue routing active for all registered modules.",
         }
+
+    def _resolve_cycle_id(self, cycle_id: str | None) -> str:
+        """Use explicit cycle_id, then current cycle_id, else generate a fresh id."""
+        return cycle_id or self._current_cycle_id or uuid4().hex

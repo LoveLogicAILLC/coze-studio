@@ -12,6 +12,8 @@ from typing import Any
 
 import yaml
 
+_NON_CONFIG_FIELDS = {"providers", "extra"}
+
 
 @dataclass
 class ProviderConfig:
@@ -66,7 +68,7 @@ class OrionConfig:
         if not isinstance(explicit_extra, dict):
             explicit_extra = {}
 
-        known_fields = {f.name for f in fields(cls)} - {"providers", "extra"}
+        known_fields = {f.name for f in fields(cls)} - _NON_CONFIG_FIELDS
         known = {k: v for k, v in raw.items() if k in known_fields}
         extra = dict(explicit_extra)
         extra.update({k: v for k, v in raw.items() if k not in known_fields})
@@ -74,9 +76,9 @@ class OrionConfig:
 
     def default_providers(self) -> list[ProviderConfig]:
         """Return Ollama-local default if no providers configured."""
-        configured = [provider for provider in self.providers if provider.enabled]
-        if configured:
-            return sorted(configured, key=lambda p: p.priority)
+        enabled_providers = [provider for provider in self.providers if provider.enabled]
+        if enabled_providers:
+            return sorted(enabled_providers, key=lambda p: p.priority)
         return [
             ProviderConfig(
                 name="ollama-local",
