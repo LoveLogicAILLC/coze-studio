@@ -40,17 +40,21 @@ class ProviderManager:
 
     def __init__(self, config: OrionConfig) -> None:
         self._providers: list[ProviderStatus] = [
-            ProviderStatus(config=p) for p in config.default_providers()
+            ProviderStatus(config=p) for p in config.default_providers() if p.enabled
         ]
         self._timeout = 30.0
 
     async def health_check(self, status: ProviderStatus) -> bool:
         """Ping a single provider and update its health flag."""
         url = f"{status.config.base_url}/api/tags"
+        headers: dict[str, str] = {}
+        if status.config.api_key:
+            headers["Authorization"] = f"Bearer {status.config.api_key}"
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
-                resp = await client.get(url)
+                resp = await client.get(url, headers=headers)
                 status.healthy = resp.status_code == 200
+                status.last_error = "" if status.healthy else f"HTTP {resp.status_code}"
         except httpx.HTTPError as exc:
             status.healthy = False
             status.last_error = str(exc)

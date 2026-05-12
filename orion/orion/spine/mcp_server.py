@@ -111,7 +111,11 @@ class OrionMcpServer:
         args = arguments or {}
 
         if tool_name == "orion.health":
-            return {"status": "ok", "modules": len(self._registry)}
+            return {
+                "status": "ok",
+                "modules": len(self._registry),
+                "providers": self._provider_manager.all_statuses(),
+            }
 
         if tool_name == "orion.list_modules":
             return self._registry.list_modules()

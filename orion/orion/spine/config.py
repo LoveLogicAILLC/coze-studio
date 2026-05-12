@@ -6,7 +6,7 @@ spine component and module.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -45,19 +45,38 @@ class OrionConfig:
         filepath = Path(path)
         if not filepath.exists():
             return cls()
-        raw: dict[str, Any] = yaml.safe_load(filepath.read_text()) or {}
+        try:
+            loaded = yaml.safe_load(filepath.read_text()) or {}
+        except yaml.YAMLError:
+            return cls()
+        if not isinstance(loaded, dict):
+            return cls()
+
+        raw = dict(loaded)
+        providers_raw = raw.pop("providers", [])
+        if providers_raw is None:
+            providers_raw = []
+        if not isinstance(providers_raw, list):
+            providers_raw = []
         providers = [
-            ProviderConfig(**p) for p in raw.pop("providers", [])
+            ProviderConfig(**p) for p in providers_raw if isinstance(p, dict)
         ]
-        known_fields = {f.name for f in cls.__dataclass_fields__.values()}  # type: ignore[attr-defined]
+
+        explicit_extra = raw.pop("extra", {})
+        if not isinstance(explicit_extra, dict):
+            explicit_extra = {}
+
+        known_fields = {f.name for f in fields(cls)} - {"providers", "extra"}
         known = {k: v for k, v in raw.items() if k in known_fields}
-        extra = {k: v for k, v in raw.items() if k not in known_fields}
+        extra = dict(explicit_extra)
+        extra.update({k: v for k, v in raw.items() if k not in known_fields})
         return cls(providers=providers, extra=extra, **known)
 
     def default_providers(self) -> list[ProviderConfig]:
         """Return Ollama-local default if no providers configured."""
-        if self.providers:
-            return sorted(self.providers, key=lambda p: p.priority)
+        configured = [provider for provider in self.providers if provider.enabled]
+        if configured:
+            return sorted(configured, key=lambda p: p.priority)
         return [
             ProviderConfig(
                 name="ollama-local",

@@ -63,6 +63,11 @@ class SoulprintModule(BaseModule):
                     "patterns": [],
                     "estate_id": estate_id,
                 })
+            elif estate_id:
+                for person in self._persons.values():
+                    if person.get("estate_id") == estate_id:
+                        person["last_estate_event"] = event.payload
+                        break
 
     async def handle_mcp_call(self, tool: str, args: dict[str, Any]) -> Any:
         if tool == "analyze_decision":
@@ -104,7 +109,7 @@ class SoulprintModule(BaseModule):
         })
         person["data_points"].extend(data_points)
 
-        if len(person["data_points"]) % 10 == 0:
+        if data_points and len(person["data_points"]) % 10 == 0:
             pattern_type = "behavioural_cycle"
             await self.emit("soulprint.pattern_discovered", {
                 "person_id": person_id,

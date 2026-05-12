@@ -88,19 +88,17 @@ class BaseModule(abc.ABC):
             errors.append("Module description is required.")
 
         contract_path = self._contract_path()
-        if contract_path is not None and not contract_path.exists():
+        if not contract_path.exists():
             errors.append(f"CONTRACT.md not found at {contract_path}")
 
         return errors
 
-    def _contract_path(self) -> Path | None:
+    def _contract_path(self) -> Path:
         """Resolve the expected CONTRACT.md path for this module."""
         mod_file = Path(__file__).resolve()
         # Walk up to orion/orion/contracts -> orion/orion -> look for modules/{name}
         modules_dir = mod_file.parent.parent / "modules" / self.name
-        if modules_dir.is_dir():
-            return modules_dir / "CONTRACT.md"
-        return None
+        return modules_dir / "CONTRACT.md"
 
     # ------------------------------------------------------------------
     # Helpers

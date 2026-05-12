@@ -69,9 +69,19 @@ class EventBus:
             event.source_module,
             len(handlers),
         )
-        await asyncio.gather(
+        results = await asyncio.gather(
             *(h(event) for h in handlers), return_exceptions=True
         )
+        exceptions = [result for result in results if isinstance(result, Exception)]
+        if exceptions:
+            for error in exceptions:
+                logger.exception(
+                    "Handler failure for event '%s': %s", event.name, error
+                )
+            raise ExceptionGroup(
+                f"{len(exceptions)} handler(s) failed for event '{event.name}'",
+                exceptions,
+            )
 
     def history(self, event_name: str | None = None) -> list[Event]:
         """Return event history, optionally filtered by name."""
