@@ -1336,6 +1336,11 @@
       "packageName": "@coze-arch/bot-md-box-adapter",
       "projectFolder": "frontend/packages/arch/bot-md-box-adapter",
       "tags": ["level-2"]
+    },
+    {
+      "packageName": "@coze-studio/simulation-ide",
+      "projectFolder": "frontend/packages/studio/simulation-ide",
+      "tags": ["team-studio", "level-3"]
     }
   ]
 }

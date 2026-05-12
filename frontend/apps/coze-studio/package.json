@@ -39,6 +39,7 @@
     "@coze-studio/api-schema": "workspace:*",
     "@coze-studio/default-slardar": "workspace:*",
     "@coze-studio/project-publish": "workspace:*",
+    "@coze-studio/simulation-ide": "workspace:*",
     "@coze-studio/workspace-adapter": "workspace:*",
     "@coze-studio/workspace-base": "workspace:*",
     "@coze-workflow/playground-adapter": "workspace:*",
