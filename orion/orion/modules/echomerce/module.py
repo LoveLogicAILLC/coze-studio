@@ -104,6 +104,16 @@ class EchomerceModule(BaseModule):
             "offering_id": offering_id,
             "demand_id": demand_id,
         })
+        raw_amount = args.get("amount", 0)
+        try:
+            amount = float(raw_amount)
+        except (TypeError, ValueError):
+            amount = 0.0
+        await self.emit("echomerce.revenue_event", {
+            "amount": amount,
+            "currency": args.get("currency", "USD"),
+            "surface": "marketplace_transaction",
+        })
         return {"offering_id": offering_id, "demand_id": demand_id}
 
     async def _query_demand_graph(self, args: dict[str, Any]) -> dict[str, Any]:

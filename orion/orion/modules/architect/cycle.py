@@ -58,7 +58,7 @@ class ImprovementCycle:
         ))
 
         # Phase 1: Discovery
-        discovery = await self.discovery_phase()
+        discovery = await self.discovery_phase(cycle_id=cycle_id)
 
         # Phase 2: Architecture
         architecture = await self.architecture_phase(discovery, seed)
@@ -94,7 +94,9 @@ class ImprovementCycle:
 
         return result
 
-    async def discovery_phase(self, target_path: str = ".") -> dict[str, Any]:
+    async def discovery_phase(
+        self, target_path: str = ".", cycle_id: str | None = None
+    ) -> dict[str, Any]:
         """Phase 1: Loki-style discovery scan."""
         self._phase = "discovery"
         logger.info("Phase 1: Discovery & Critique — scanning %s", target_path)
@@ -119,6 +121,8 @@ class ImprovementCycle:
         for e in events:
             all_event_emissions.add(e.name)
 
+        scan_results["known_event_subscriptions"] = sorted(all_event_subs)
+
         unhandled = all_event_emissions - all_event_subs
         if unhandled:
             scan_results["opportunities"].append({
@@ -138,7 +142,7 @@ class ImprovementCycle:
         await self._event_bus.emit(Event(
             name="architect.discovery_complete",
             payload={
-                "cycle_id": self._current_cycle_id or "",
+                "cycle_id": self._resolve_cycle_id(cycle_id),
                 "opportunities": scan_results["opportunities"],
             },
             source_module="architect",
@@ -165,7 +169,9 @@ class ImprovementCycle:
                     "version": "0.1.0",
                     "description": opp["description"],
                     "mcp_tools": [f"{opp['type']}_analyze"],
-                    "event_subscriptions": list(discovery.get("modules", [])),
+                    "event_subscriptions": list(
+                        discovery.get("known_event_subscriptions", [])
+                    ),
                     "revenue_surfaces": [f"{opp['type']}_api"],
                 },
             }
@@ -214,3 +220,7 @@ class ImprovementCycle:
             "treasury_updated": True,
             "note": "Revenue routing active for all registered modules.",
         }
+
+    def _resolve_cycle_id(self, cycle_id: str | None) -> str:
+        """Use explicit cycle_id, then current cycle_id, else generate a fresh id."""
+        return cycle_id or self._current_cycle_id or uuid4().hex

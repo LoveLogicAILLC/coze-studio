@@ -107,6 +107,8 @@ class GriefDAOModule(BaseModule):
         if estate is None:
             return {"error": f"Estate '{estate_id}' not found"}
         new_artifacts = args.get("artifacts", [])
+        if not isinstance(new_artifacts, list):
+            return {"error": "artifacts must be a list"}
         estate["artifacts"].extend(new_artifacts)
         await self.emit("griefdao.estate_updated", {
             "estate_id": estate_id,

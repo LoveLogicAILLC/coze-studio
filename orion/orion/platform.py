@@ -33,9 +33,13 @@ class OrionPlatform:
         self.provider_manager = ProviderManager(self.config)
         self.registry = ModuleRegistry()
         self.mcp_server: OrionMcpServer | None = None
+        self._bootstrapped = False
 
     async def bootstrap(self) -> None:
         """Initialise spine, register all core modules, wire event bus."""
+        if self._bootstrapped:
+            logger.info("ORION platform already bootstrapped; skipping.")
+            return
         logger.info("Bootstrapping ORION platform...")
 
         # Core domain modules
@@ -56,6 +60,7 @@ class OrionPlatform:
         self.mcp_server = OrionMcpServer(
             self.registry, self.event_bus, self.provider_manager
         )
+        self._bootstrapped = True
 
         logger.info(
             "ORION bootstrap complete — %d modules registered", len(self.registry)

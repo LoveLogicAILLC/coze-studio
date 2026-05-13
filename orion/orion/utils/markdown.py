@@ -32,8 +32,13 @@ def parse_contract(path: Path | str) -> dict[str, Any]:
     if not match:
         return {}
     raw = match.group(1)
-    result: dict[str, Any] = yaml.safe_load(raw) or {}
-    return result
+    try:
+        parsed = yaml.safe_load(raw) or {}
+    except yaml.YAMLError:
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+    return parsed
 
 
 def validate_contract_fields(data: dict[str, Any]) -> list[str]:

@@ -68,7 +68,16 @@ class ArchitectModule(BaseModule):
     async def handle_event(self, event: Event) -> None:
         logger.info("Architect received event: %s", event.name)
         if event.name.endswith(".revenue_event"):
-            amount = event.payload.get("amount", 0)
+            raw_amount = event.payload.get("amount", 0)
+            try:
+                amount = float(raw_amount)
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Ignoring malformed revenue amount from %s: %r",
+                    event.source_module,
+                    raw_amount,
+                )
+                return
             self._treasury += amount
             await self.emit("architect.revenue_routed", {
                 "amount": amount,
