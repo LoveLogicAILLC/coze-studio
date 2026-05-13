@@ -150,3 +150,6 @@ export const ExplorePluginPage = lazy(() =>
     default: exps.PluginPage,
   })),
 );
+
+// simulation IDE page
+export const SimulationPage = lazy(() => import('../pages/simulation'));

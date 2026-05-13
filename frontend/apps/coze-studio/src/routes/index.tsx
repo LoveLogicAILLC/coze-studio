@@ -45,6 +45,7 @@ import {
   DatabaseDetail,
   ExplorePluginPage,
   ExploreTemplatePage,
+  SimulationPage,
 } from './async-components';
 
 export const router: ReturnType<typeof createBrowserRouter> =
@@ -243,6 +244,16 @@ export const router: ReturnType<typeof createBrowserRouter> =
         {
           path: 'work_flow',
           Component: WorkflowPage,
+          loader: () => ({
+            hasSider: false,
+            requireAuth: true,
+          }),
+        },
+
+        // simulation IDE routing
+        {
+          path: 'simulation',
+          Component: SimulationPage,
           loader: () => ({
             hasSider: false,
             requireAuth: true,
